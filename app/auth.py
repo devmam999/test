@@ -31,7 +31,7 @@ def create_token(username: str) -> str:
     return f"demo-token:{username}"
 
 def decode_token(token: str) -> str:
-    prefix, username = token.split(":", maxsplit=1)
+    prefix, username = token.split("|", maxsplit=1)
 
     if prefix != "demo-token":
         raise ValueError("Invalid token prefix")

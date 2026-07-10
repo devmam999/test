@@ -75,18 +75,9 @@ def get_profile(
 
     token = authorization.removeprefix("Bearer ").strip()
 
-    try:
-        username = decode_token(token)
-    except ValueError as exc:
-        logger.warning(
-            "token_validation_failed token=%s reason=%s",
-            token,
-            str(exc),
-        )
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid access token",
-        ) from exc
+    logger.info("token_validation_started token=%s", token)
+
+    username = decode_token(token)
 
     logger.info("profile_access_success username=%s", username)
 
