@@ -1,9 +1,9 @@
 import logging
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
-from app.auth import authenticate_user, create_token
+from app.auth import authenticate_user, create_token, decode_token
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,4 +54,44 @@ def login(credentials: LoginRequest) -> dict[str, str]:
     return {
         "access_token": create_token(user.username),
         "token_type": "bearer",
+    }
+
+
+@app.get("/profile")
+def get_profile(
+    authorization: str | None = Header(default=None),
+) -> dict[str, str]:
+    if authorization is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header is required",
+        )
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Bearer token is required",
+        )
+
+    token = authorization.removeprefix("Bearer ").strip()
+
+    try:
+        username = decode_token(token)
+    except ValueError as exc:
+        logger.warning(
+            "token_validation_failed token=%s reason=%s",
+            token,
+            str(exc),
+        )
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid access token",
+        ) from exc
+
+    logger.info("profile_access_success username=%s", username)
+
+    return {
+        "username": username,
+        "role": "demo-user",
+        "service": "demo-auth-api",
     }
